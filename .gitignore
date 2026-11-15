@@ -1,0 +1,19 @@
+# Database credentials
+db.php
+.env
+.env.*
+
+# Backups
+backup_before_demo/
+*.bak
+*.zip
+*.log
+*backup*.sql
+
+# Editor files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
