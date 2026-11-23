@@ -1,34 +1,54 @@
 <?php
 require_once 'helpers.php';
-require_once 'db.php';
 $user = require_role('admin');
-$statuses = ['pending', 'in_progress', 'resolved'];
-$filter = (string)($_GET['status'] ?? 'all');
-if ($filter !== 'all' && !in_array($filter, $statuses, true)) $filter = 'all';
-$counts = $pdo->query("SELECT COUNT(*) total,
- SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) pending,
- SUM(CASE WHEN status='in_progress' THEN 1 ELSE 0 END) in_progress,
- SUM(CASE WHEN status='resolved' THEN 1 ELSE 0 END) resolved FROM complaints")->fetch();
-$sql = 'SELECT c.id,c.title,c.category,c.status,c.created_at,u.name student_name,u.email student_email
- FROM complaints c JOIN users u ON c.user_id=u.id';
-if ($filter !== 'all') $sql .= ' WHERE c.status = ?';
-$sql .= ' ORDER BY c.id DESC LIMIT 100';
-$stmt = $pdo->prepare($sql);
-$stmt->execute($filter === 'all' ? [] : [$filter]);
-$complaints = $stmt->fetchAll();
 page_top('Admin Dashboard');
 ?>
-<div class="eyebrow">Administration</div><h1>Complaint Management</h1><p class="sub">Review student submissions, update progress and respond to complaints.</p>
-<div class="grid admin-metrics">
-<div class="metric"><span>All Complaints</span><strong><?= (int)$counts['total'] ?></strong></div>
-<div class="metric"><span>Pending</span><strong><?= (int)$counts['pending'] ?></strong></div>
-<div class="metric"><span>In Progress</span><strong><?= (int)$counts['in_progress'] ?></strong></div>
-<div class="metric"><span>Resolved</span><strong><?= (int)$counts['resolved'] ?></strong></div>
+<div id="admin-app" data-csrf="<?= h(csrf_token()) ?>">
+    <div class="split">
+        <div>
+            <div class="eyebrow">Administration</div>
+            <h1>Complaint Management</h1>
+            <p class="sub">Search, review, edit and safely resolve student complaints.</p>
+        </div>
+        <a class="btn secondary" href="users.php">Manage Users</a>
+    </div>
+    <div class="grid admin-metrics">
+        <div class="metric"><span>All Complaints</span><strong id="count-all">—</strong></div>
+        <div class="metric"><span>Pending</span><strong id="count-pending">—</strong></div>
+        <div class="metric"><span>In Progress</span><strong id="count-progress">—</strong></div>
+        <div class="metric"><span>Resolved</span><strong id="count-resolved">—</strong></div>
+    </div>
+    <div id="admin-message" class="alert" hidden></div>
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Student Complaints</h2>
+            <form id="complaint-filter" class="filter" role="search">
+                <label class="sr-only" for="complaint-search">Search complaints</label>
+                <input class="field search-field" id="complaint-search" name="q" type="search" maxlength="100" placeholder="Search title or student…">
+                <label class="sr-only" for="status-filter">Status</label>
+                <select class="field" id="status-filter" name="status">
+                    <option value="all">All statuses</option><option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option><option value="resolved">Resolved</option>
+                </select>
+                <button class="btn secondary" type="submit">Search</button>
+            </form>
+        </div>
+        <p class="table-hint">Swipe the table to see all columns.</p>
+        <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>Complaint</th><th>Student</th><th>Category</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="complaints-body"><tr><td colspan="7" class="empty">Loading complaints…</td></tr></tbody>
+        </table></div>
+    </section>
+    <dialog id="edit-complaint-dialog" class="modal">
+        <form id="edit-complaint-form">
+            <div class="modal-head"><h2>Edit Complaint</h2><button class="icon-btn" type="button" data-close aria-label="Close">×</button></div>
+            <input id="edit-id" type="hidden">
+            <div class="form-field"><label for="edit-title">Title</label><input class="field" id="edit-title" maxlength="200" required></div>
+            <div class="form-field"><label for="edit-category">Category</label><input class="field" id="edit-category" maxlength="100" required></div>
+            <div class="form-field"><label for="edit-description">Description</label><textarea class="field" id="edit-description" minlength="10" maxlength="5000" required></textarea></div>
+            <div class="actions"><button class="btn" type="submit">Save Changes</button><button class="btn secondary" type="button" data-close>Cancel</button></div>
+        </form>
+    </dialog>
 </div>
-<section class="panel"><div class="panel-header"><h2>Student Complaints</h2>
-<form class="filter" method="get" action="admin.php"><label for="status">Status</label><select class="field" id="status" name="status"><option value="all" <?= $filter === 'all' ? 'selected' : '' ?>>All</option><?php foreach ($statuses as $status): ?><option value="<?= h($status) ?>" <?= $filter === $status ? 'selected' : '' ?>><?= h(state_label($status)) ?></option><?php endforeach; ?></select><button class="btn secondary" type="submit">Filter</button></form>
-</div><p class="table-hint">Swipe the table to see all columns.</p><div class="table-wrap"><table><thead><tr><th>ID</th><th>Complaint</th><th>Student</th><th>Category</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>
-<?php foreach ($complaints as $c): ?><tr><td>#<?= (int)$c['id'] ?></td><td class="truncate"><?= h($c['title']) ?></td><td><?= h($c['student_name']) ?><div class="tiny"><?= h($c['student_email']) ?></div></td><td><?= h($c['category']) ?></td><td><span class="badge <?= h($c['status']) ?>"><?= h(state_label($c['status'])) ?></span></td><td><?= h($c['created_at']) ?></td><td><a class="link-action" href="complaint.php?id=<?= (int)$c['id'] ?>">Manage →</a></td></tr><?php endforeach; ?>
-</tbody></table></div><?php if (!$complaints): ?><p class="empty">No complaints found.</p><?php endif; ?></section>
-<div class="note"><strong>Database relationship in action:</strong> This page uses <code>complaints.user_id = users.id</code> to show the student's name beside each complaint.</div>
+<script src="assets/admin.js" defer></script>
 <?php page_bottom(); ?>
