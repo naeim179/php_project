@@ -16,3 +16,8 @@ backup_before_demo/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Local database configuration
+/db.php
+.env
+.env.*
