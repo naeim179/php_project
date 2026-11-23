@@ -1,115 +1,43 @@
-# University Complaint Management System — Working Demo
+# CampusVoice — University Complaint Management System
 
-نسخة عرض عملي لمشروع PHP (Student + Administrator) مرتبطة بالجداول الثلاثة التي أنشأتها سابقًا على MariaDB.
+مشروع PHP وMariaDB لإدارة شكاوى الجامعة. يستطيع الطالب إنشاء حساب وتقديم شكوى ومتابعة حالتها والردود عليها. يستطيع المسؤول عرض الشكاوى، تصفيتها حسب الحالة، وتحديثها وإرسال ردود. صفحات الطالب والمسؤول محمية بالجلسات، والنماذج التي تغيّر البيانات تستخدم CSRF.
 
-## قبل التشغيل
+## التشغيل المحلي باستخدام XAMPP
 
-- على Windows، شغّل **Apache** و**MySQL** من XAMPP.
-- قاعدة البيانات الموجودة عندك: `university_complaints_db`.
-- الجداول الموجودة مسبقًا: `users`, `complaints`, `responses`.
-- **لا تحذف الجداول ولا تعِد إنشاءها**؛ الحزمة تستخدم الجداول كما هي. ملف `database/schema.sql` مرجع اختياري لمن يبدأ من الصفر.
-- كود `db.php` يستخدم إعداد XAMPP المحلي: `root` بدون كلمة مرور، والـ port هو `3306`؛ إذا غيرت الإعدادات عدل `db.php`.
-
-## التثبيت — VS Code Terminal (Git Bash)
-
-1. نزّل ZIP إلى مجلد Downloads في Windows.
-2. داخل Git Bash افتح مجلد مشروعك:
+1. شغّل Apache وMySQL من XAMPP، وضع ملفات المشروع مباشرة داخل `htdocs/university_complaints`.
+2. إذا لم تكن قاعدة البيانات موجودة، استورد `database/schema.sql` من phpMyAdmin. إذا كانت قاعدة `university_complaints_db` وجداول `users` و`complaints` و`responses` موجودة مسبقًا، احتفظ بها. الملف يستخدم `CREATE ... IF NOT EXISTS` ولا يحذف البيانات.
+3. ملف `db.php` موجود الآن في المشروع. إعداداته الافتراضية مناسبة لـXAMPP المحلي: `127.0.0.1:3306`، قاعدة `university_complaints_db`، والمستخدم `root` بلا كلمة مرور. لتغييرها استخدم متغيرات البيئة `DB_HOST` و`DB_PORT` و`DB_NAME` و`DB_USER` و`DB_PASSWORD` بدل تعديل الشيفرة.
+4. شغّل فحص البيئة من سطر الأوامر:
 
    ```bash
-   cd /d/php/htdocs/university_complaints
+   /d/php/php/php.exe scripts/check_environment.php
    ```
 
-3. احتفظ بنسخة احتياطية من ملفاتك الحالية:
-
-   ```bash
-   mkdir -p backup_before_demo
-   cp -n index.php db.php register.php login.php backup_before_demo/ 2>/dev/null || true
-   ```
-
-4. فك ملف ZIP في **نفس مجلد المشروع** (ليس في مجلد فرعي):
-
-   ```bash
-   unzip -o ~/Downloads/University_Complaint_60_Percent_Demo.zip
-   ```
-
-   إذا حُفظ ملف ZIP بمكان مختلف، غيّر مساره. وإذا لم يتوفر `unzip` في Git Bash، استخرج محتويات ZIP من Windows File Explorer وانسخها إلى هذا المجلد.
-
-5. لإعداد حسابين تجريبيين (طالب + مسؤول) استخدم:
+   يجب أن تظهر رسالة نجاح تفيد بوجود امتداد `pdo_mysql` والجداول الثلاثة وعلاقات المفاتيح الأجنبية. إذا ظهرت أسماء أعمدة ناقصة، طابق قاعدة بياناتك الحالية مع `database/schema.sql` دون حذف بياناتك.
+5. لإنشاء حساب طالب ومسؤول تجريبيين محليًا:
 
    ```bash
    /d/php/php/php.exe scripts/seed_demo.php
    ```
 
-   انسخ البريد وكلمة المرور اللذين سيظهران في Terminal. عند تكرار الأمر، تتغير كلمات مرور الحسابين التجريبيين فقط.
+   احتفظ بكلمتي المرور اللتين يعرضهما الأمر. إعادة تشغيله تغيّر كلمات مرور حسابي التجربة فقط.
+6. افتح `http://localhost/university_complaints/`.
 
-6. افتح في المتصفح: `http://localhost/university_complaints/index.php`
+## مسار تجربة النظام
 
-## تجربة حيّة أمام الدكتور
+1. ادخل بحساب الطالب `student.demo@example.test`، وقدّم شكوى ثم افتح تفاصيلها.
+2. سجّل الخروج وادخل بحساب المسؤول `admin.demo@example.test`، ثم غيّر الحالة وأرسل ردًا.
+3. ارجع إلى حساب الطالب وتأكد من ظهور الحالة والرد، ثم جرّب تسجيل طالب جديد؛ الحساب الجديد يملك دور الطالب فقط.
+4. اعرض `diagram.php` لمقارنة العلاقات والوظائف بالمخطط. ملف `database/verify_relations.sql` يحتوي استعلامات الفحص الإضافية.
 
-1. **Student:** سجل دخول بالحساب التجريبي `student.demo@example.test` وكلمة المرور الناتجة من الأمر أعلاه.
-2. اضغط **Submit Complaint** وأدخل مثالًا:
-   - Title: `Wi-Fi unavailable in Lab 2`
-   - Category: `IT`
-   - Description: `The Wi-Fi has been unavailable in Lab 2 since this morning.`
-3. يظهر رقم الشكوى وحالتها **Pending**. ارجع إلى **My Complaint History** وتأكد من وجودها.
-4. اضغط **Logout** وسجّل دخول بحساب `admin.demo@example.test` وكلمة المرور الناتجة.
-5. في **Admin Dashboard** ستظهر الشكوى وبجانبها اسم الطالب؛ افتحها وغيّر الحالة إلى **In Progress**.
-6. من **Send Response** اكتب `IT team will inspect the network today.` واضغط **Send Response**.
-7. ارجع إلى حساب الطالب وشوف الحالة الجديدة والرد داخل نفس الشكوى.
-8. افتح **Use Case Diagram** من القائمة واربط كل خطوة بالوظيفة المقابلة في الرسم.
+## بنية المشروع
 
-## عرض علاقات قاعدة البيانات بشكل ملموس
+- `db.php`: اتصال PDO بقاعدة MariaDB مع قيم XAMPP المحلية ومتغيرات البيئة.
+- `helpers.php`: الجلسة، فحص الأدوار، حماية CSRF، وتنسيق الصفحات.
+- `register.php` و`login.php` و`logout.php`: إدارة الحساب والدخول.
+- `student.php` و`new_complaint.php`: لوحة الطالب وتقديم الشكوى.
+- `admin.php` و`complaint.php`: عرض الشكاوى وتحديث الحالة والرد.
+- `scripts/check_environment.php`: فحص امتدادات PHP والبنية والعلاقات، من سطر الأوامر فقط.
+- `scripts/seed_demo.php`: إنشاء حسابات اصطناعية للعرض المحلي فقط.
 
-من Git Bash:
-
-```bash
-/d/php/mysql/bin/mysql.exe -u root university_complaints_db
-```
-
-وبداخل MariaDB نفّذ:
-
-```sql
--- العلاقة الأولى: كل شكوى وصاحبها
-SELECT c.id, c.title, u.name AS student_name
-FROM complaints c
-JOIN users u ON c.user_id = u.id;
-
--- العلاقة الثانية والثالثة: كل رد + الشكوى + المسؤول
-SELECT r.id, c.title, a.name AS admin_name, r.message
-FROM responses r
-JOIN complaints c ON r.complaint_id = c.id
-JOIN users a ON r.admin_id = a.id;
-
--- إثبات أن العلاقات معرفة كـ FOREIGN KEY بالفعل
-SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
-FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA='university_complaints_db'
-AND REFERENCED_TABLE_NAME IS NOT NULL;
-```
-
-أو افتح الملف `database/verify_relations.sql` الذي يحتوي جميع الاستعلامات.
-
-## ملفات المشروع
-
-| الملف | الوظيفة |
-|---|---|
-| `index.php` | صفحة البداية وتوجيه المستخدم حسب الدور |
-| `register.php` | تسجيل الطالب (كلمة المرور تحفظ كـ hash) |
-| `login.php`, `logout.php` | تسجيل الدخول والخروج باستخدام Sessions |
-| `student.php` | لوحة الطالب وعرض شكاويه الخاصة |
-| `new_complaint.php` | حفظ شكوى جديدة مرتبطة بالطالب |
-| `admin.php` | لوحة المسؤول وعرض جميع الشكاوى باستخدام JOIN |
-| `complaint.php` | تفاصيل الشكوى، تحديث حالتها وردود المسؤول |
-| `diagram.php` | الـ Use Case Diagram الأصلي وعلاقات الجداول |
-| `db.php` | الاتصال بقاعدة البيانات باستخدام PDO |
-| `helpers.php` | الجلسات وفحص الصلاحيات وCSRF وتنسيق الصفحات |
-| `assets/style.css` | تصميم الواجهة |
-| `scripts/seed_demo.php` | حسابات عرض محلية من Terminal فقط |
-
-## الحدود والأمان
-
-- المشروع **نسخة جامعية محلية للعرض وليست نسخة إنتاجية**. لا ترفعها كما هي على الإنترنت.
-- بيانات حسابات التجربة اصطناعية؛ تجنّب إدخال بيانات شخصية حقيقية.
-- يوجد Prepared Statements لمنع SQL injection، و`password_hash` / `password_verify`، وفحص صلاحيات Student/Admin، وCSRF للعمليات التي تغيّر البيانات.
-- تحتاج لاحقًا: مستخدم DB بصلاحيات أقل من `root`، حماية إضافية لرفع الملفات إذا أضفته، استعادة كلمة المرور، إعدادات نشر وحفظ أسرار آمنة، مراجعة تحقق الإدخال، اختبارات شاملة.
-- تأكد عمليًا من عمل النسخة على XAMPP عندك، لأن اختبار الاتصال بقاعدة البيانات لا يمكن إجراؤه على جهازك من هنا.
+هذا مشروع جامعي للتشغيل المحلي. النشر العام يحتاج إعداد خادم وقاعدة بيانات آمنين، مستخدم قاعدة بيانات محدود الصلاحيات، وإزالة حسابات العرض التجريبي. لا تضع بيانات أشخاص حقيقيين في نسخة العرض.

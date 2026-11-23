@@ -181,8 +181,8 @@ page_top('Complaint #' . $id);
                        value="<?= h(csrf_token()) ?>">
 
                 <div class="form-field">
-                    <label>Complaint Status</label>
-                    <select class="field" name="status">
+                    <label for="status">Complaint Status</label>
+                    <select class="field" id="status" name="status">
                         <?php foreach ($statuses as $status): ?>
                             <option value="<?= h($status) ?>"
                                 <?= $chosenStatus === $status ? 'selected' : '' ?>>
@@ -193,9 +193,10 @@ page_top('Complaint #' . $id);
                 </div>
 
                 <div class="form-field">
-                    <label>Response / Comment</label>
+                    <label for="message">Response / Comment</label>
                     <textarea
                         class="field"
+                        id="message"
                         name="message"
                         maxlength="4000"
                         placeholder="Write your response (optional)..."

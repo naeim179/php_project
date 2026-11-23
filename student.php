@@ -20,7 +20,7 @@ page_top('Student Dashboard');
   <div class="metric"><span>Pending / In Progress</span><strong><?= (int)$counts['pending'] + (int)$counts['in_progress'] ?></strong></div>
   <div class="metric"><span>Resolved</span><strong><?= (int)$counts['resolved'] ?></strong></div>
 </div>
-<div class="panel"><div class="panel-header"><h2>My Complaint History</h2><span class="tiny">Latest 100 records</span></div><div class="table-wrap"><table>
+<div class="panel"><div class="panel-header"><h2>My Complaint History</h2><span class="tiny">Latest 100 records</span></div><p class="table-hint">Swipe the table to see all columns.</p><div class="table-wrap"><table>
 <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>
 <?php foreach ($complaints as $c): ?>
 <tr><td>#<?= (int)$c['id'] ?></td><td class="truncate"><?= h($c['title']) ?></td><td><?= h($c['category']) ?></td><td><span class="badge <?= h($c['status']) ?>"><?= h(state_label($c['status'])) ?></span></td><td><?= h($c['created_at']) ?></td><td><a class="link-action" href="complaint.php?id=<?= (int)$c['id'] ?>">View →</a></td></tr>
