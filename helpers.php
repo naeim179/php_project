@@ -28,6 +28,15 @@ function verify_csrf(): void {
         exit('Invalid form token. Reload the page and try again.');
     }
 }
+function verify_csrf_value(?string $token): bool {
+    return is_string($token) && $token !== '' && hash_equals(csrf_token(), $token);
+}
+function request_csrf_token(): ?string {
+    $header = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+    if (is_string($header) && $header !== '') return $header;
+    $form = $_POST['csrf_token'] ?? null;
+    return is_string($form) ? $form : null;
+}
 function current_user(): ?array {
     if (!isset($_SESSION['user_id'], $_SESSION['role'])) return null;
     return [
@@ -52,6 +61,9 @@ function require_role(string $role): array {
     }
     return $user;
 }
+function is_admin(array $user): bool {
+    return ($user['role'] ?? '') === 'admin';
+}
 function redirect(string $url): never {
     header('Location: ' . $url);
     exit;
@@ -65,6 +77,12 @@ function state_label(string $status): string {
     };
 }
 function page_top(string $title): void {
+    if (!headers_sent()) {
+        header('X-Content-Type-Options: nosniff');
+        header('X-Frame-Options: DENY');
+        header('Referrer-Policy: same-origin');
+        header("Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self'; script-src 'self'");
+    }
     $user = current_user();
     $dash = $user && $user['role'] === 'admin' ? 'admin.php' : 'student.php';
     $title = h($title);
@@ -78,6 +96,7 @@ function page_top(string $title): void {
     if ($user) {
         echo '<a href="' . $dash . '">Dashboard</a>';
         if ($user['role'] === 'student') echo '<a href="new_complaint.php">New Complaint</a>';
+        if ($user['role'] === 'admin') echo '<a href="users.php">Users</a>';
         echo '<a href="diagram.php">Use Case Diagram</a>';
         echo '<span class="user-pill">' . h($user['name']) . '</span>';
         echo '<form method="post" action="logout.php"><input type="hidden" name="csrf_token" value="' . h(csrf_token()) . '"><button class="nav-logout" type="submit">Log out</button></form>';

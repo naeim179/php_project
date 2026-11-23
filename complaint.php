@@ -169,11 +169,15 @@ page_top('Complaint #' . $id);
     </div>
 
     <?php if ($isAdmin): ?>
-    <aside>
+    <aside id="update">
         <section class="panel">
             <h2>Update Complaint</h2>
 
-            <form method="POST"
+            <div id="update-message" class="alert" hidden></div>
+
+            <form id="update-complaint-form" method="POST"
+                  data-complaint-id="<?= (int)$id ?>"
+                  data-csrf="<?= h(csrf_token()) ?>"
                   action="complaint.php?id=<?= (int)$id ?>">
 
                 <input type="hidden"
@@ -212,5 +216,7 @@ page_top('Complaint #' . $id);
     </aside>
     <?php endif; ?>
 </div>
+
+<?php if ($isAdmin): ?><script src="assets/complaint.js" defer></script><?php endif; ?>
 
 <?php page_bottom(); ?>
